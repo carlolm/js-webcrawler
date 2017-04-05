@@ -2,11 +2,18 @@ var request = require('request');
 var cheerio = require('cheerio');
 var URL = require('url-parse');
 var prompt = require('prompt');
+var fs = require('fs');
 
+var count = 0;
+var limit = 200;
+var found = 0;
+var target = '';
+var results = [];
+var resultCount = 0;
 
-function crawlPage(url) {
+function crawlPage(url, target) {
 
-  console.log("Visiting page " + pageToVisit);
+  console.log('***** Visiting page [' +count + '] :' + url);
   request(url, function(error, response, body) {
     if(error) {
       console.log("Error: " + error);
@@ -19,6 +26,18 @@ function crawlPage(url) {
         // Parse the document body
         var $ = cheerio.load(body);
         console.log("Page title:  " + $('title').text());
+
+        // search for word in page
+        // log to results
+
+        var bodyText = $('html > body').text();
+
+        if (bodyText.toLowerCase().indexOf(target) >= 0) {
+          resultCount++;
+          results.push(url);
+        }
+
+        collectInternalLinks($);
       }
     }
 
@@ -26,36 +45,46 @@ function crawlPage(url) {
 
 }
 
-
 function collectInternalLinks($) {
 
   var allRelativeLinks = [];
   var allAbsoluteLinks = [];
 
   var relativeLinks = $("a[href^='/']");
+  
   relativeLinks.each(function() {
-     allRelativeLinks.push($(this).attr('href'));
-
+    allRelativeLinks.push($(this).attr('href'));
   });
 
   var absoluteLinks = $("a[href^='http']");
+
   absoluteLinks.each(function() {
-     allAbsoluteLinks.push($(this).attr('href'));
+    allAbsoluteLinks.push($(this).attr('href'));
   });
 
-  console.log("Found " + allRelativeLinks.length + " relative links");
-  console.log("Found " + allAbsoluteLinks.length + " absolute links");
+  console.log("  Found " + allRelativeLinks.length + " relative links");
+  console.log("  Found " + allAbsoluteLinks.length + " absolute links");
 
-  allAbsoluteLinks.forEach(url => crawlPage(url));
+  allAbsoluteLinks.forEach(url => {
+    console.log(' => URL: [' + count + '] ' + url);
+    if (count < limit) crawlPage(url);
+    count++;
+  });
 
 }
 
 prompt.start();
 
-prompt.get(['url'], function(err, result) {
+prompt.get(['url', 'word'], function(err, result) {
 
+  target = result.word;
   console.log('Command line input received');
   console.log('  url: ' + result.url);
-  crawlPage(result.url);
-  
+  console.log('  word: ' + result.word.toLowerCase());
+  crawlPage('http://' + result.url, target);
+
+  console.log('********************************');
+  console.log('Result count: ' + resultCount);
+  console.log(results);
+
 });
