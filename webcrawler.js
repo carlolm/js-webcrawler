@@ -5,7 +5,7 @@ var prompt = require('prompt');
 var fs = require('fs');
 
 var count = 0;
-var limit = 200;
+var limit = 1000;
 var found = 0;
 var target = '';
 var results = [];
@@ -31,6 +31,8 @@ function crawlPage(url, target) {
         // log to results
 
         var bodyText = $('html > body').text();
+
+        console.log(bodyText);
 
         if (bodyText.toLowerCase().indexOf(target) >= 0) {
           resultCount++;
@@ -67,7 +69,7 @@ function collectInternalLinks($) {
 
   allAbsoluteLinks.forEach(url => {
     console.log(' => URL: [' + count + '] ' + url);
-    if (count < limit) crawlPage(url);
+    if (count < limit) crawlPage(url, target);
     count++;
   });
 
@@ -88,3 +90,21 @@ prompt.get(['url', 'word'], function(err, result) {
   console.log(results);
 
 });
+
+setTimeout(function() {
+
+  fs.writeFile("results.txt", results, function(err) {
+    if(err) {
+      return console.log(err);
+    }
+    console.log("**********   The file was saved!   ***************");
+    console.log("**********   The file was saved!   ***************");
+    console.log("**********   The file was saved!   ***************");
+    console.log("**********   The file was saved!   ***************");
+    console.log("**********   The file was saved!   ***************");
+    console.log("**********   The file was saved!   ***************");
+    console.log("**********   Results count   ***************: " + resultCount);
+    console.log(results);
+  }); 
+
+}, 60000);
